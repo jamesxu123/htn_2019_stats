@@ -4,9 +4,13 @@ import requests
 import numpy as np
 from scipy import stats
 import os
+from flask_cors import CORS
+from dotenv import load_dotenv
 
+load_dotenv()
 app = Flask(__name__)
 client = pymongo.MongoClient('localhost', 27017)
+CORS(app)
 
 db = client.htn_stats
 
@@ -60,7 +64,7 @@ def get_percentiles(customer_id, year, month):
     json_response = {}
     for stat in user_stats:
         stat_array = np.array(user_stats[stat])
-        avg = np.average(stat_array)
+        avg = np.average(np.abs(stat_array))
         if 'totalIncome' in response.keys():
             if response['totalIncome'] < 30000:
                 json_response[stat] = stats.percentileofscore(results['70000'][stat], avg)
@@ -78,15 +82,19 @@ def get_expense_percents(customer_id, year, month):
     monthly = clean_user_monthly(get_user_monthly(customer_id, year, month))
     total = 0
     for key in monthly.keys():
-        total += np.sum(monthly[key])
+        total += np.abs(np.sum(monthly[key]))
+        # print(total)
     for key in monthly.keys():
         monthly[key] = np.abs(np.sum(monthly[key]) / total) * 100
+        # print(monthly)
     return monthly
 
 
 @app.route('/categories')
 def get_categories():
-    return jsonify(['Health and Fitness', 'Fees and Charges', 'Shopping', 'Food and Dining', 'Auto and Transport', 'Travel', 'Home', 'Bills and Utilities', 'Mortgage and Rent', 'Transfer', 'Entertainment'])
+    return jsonify(
+        ['Health and Fitness', 'Fees and Charges', 'Shopping', 'Food and Dining', 'Auto and Transport', 'Travel',
+         'Home', 'Bills and Utilities', 'Mortgage and Rent', 'Transfer', 'Entertainment'])
 
 
 @app.route('/addReceipt', methods=['POST'])
@@ -115,4 +123,20 @@ def get_receipt(transaction_id):
         jsonify({'message': 'not found'}), 404
 
 
+@app.route('/addTags', methods=['POST'])
+def add_tags():
+    """
+    :param: {'customerId': string, 'transactionId': string, 'tags': []}
+    :return: status
+    """
+    data = request.json
+    r = requests.put('/api/transactions/' + escape(data['transactionId']) + '/transactions')
+    return r.json()
 
+
+@app.route('/getTransactions/<customer_id>/<per_page>/<page_num>')
+def get_transactions(customer_id, per_page, page_num):
+    data = requests.get('https://api.td-davinci.com/api/customers/%s/transactions' % customer_id, headers={
+        'Authorization': os.getenv('TD_API_KEY')}).json()['result']
+    paginated = data[int(per_page) * int(page_num): int(per_page) * (int(page_num) + 1)]
+    return jsonify(paginated)

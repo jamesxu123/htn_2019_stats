@@ -1,5 +1,8 @@
+dotenv
 pymongo
 flask
 numpy
 scipy
 requests
+flask-cors
+python-dotenv
