@@ -17,14 +17,6 @@ CORS(app)
 db = client.htn_stats
 
 
-def removeObjectID(object):
-    new = dict()
-    for key in object.keys():
-        if key != '_id':
-            new[key] = object[key]
-    return new
-
-
 def clean_user_monthly(data):
     if 'Taxes' in data.keys():
         data.pop('Taxes')
@@ -160,5 +152,5 @@ def get_transactions(customer_id, per_page, page_num):
     paginated = data[int(per_page) * int(page_num): int(per_page) * (int(page_num) + 1)]
     for pg in paginated:
         details = db.receipts.find_one({'transactionId': pg['id']})
-        pg['details'] = removeObjectID(details)
+        pg['details'] = dumps(details)
     return jsonify(paginated)
