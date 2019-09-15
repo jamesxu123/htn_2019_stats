@@ -100,15 +100,15 @@ def get_categories():
 @app.route('/addReceipt', methods=['POST'])
 def add_receipt():
     """
-    :param: {'image': base64, 'customerId': string, 'transactionId': string}
+    :param: {'details': [], 'customerId': string, 'transactionId': string}
     :return: status
     """
     data = request.json
-    image = data['image']
+    details = data['details']
     customer_id = data['customerId']
     transaction_id = data['transactionId']
-    if image and customer_id and transaction_id:
-        db.receipts.insert_one(data)
+    if details and customer_id and transaction_id:
+        db.receipts.update_one({'transaction_id': transaction_id}, {'$set': data}, upsert=True)
     else:
         return jsonify({'message': 'missing parameter'}), 400
     return jsonify({'message': 'success'}), 200
@@ -120,7 +120,12 @@ def get_receipt(transaction_id):
     if doc:
         return doc
     else:
-        jsonify({'message': 'not found'}), 404
+        return jsonify({'message': 'not found'}), 404
+
+
+@app.route('/getReceipt')
+def get_all_receipt():
+    return db.receipts.find()
 
 
 @app.route('/addTags', methods=['POST'])
