@@ -125,7 +125,7 @@ def get_receipt(transaction_id):
 
 @app.route('/getReceipt')
 def get_all_receipt():
-    return jsonify([i for i in db.receipts.find()])
+    return jsonify([dict(i) for i in db.receipts.find()])
 
 
 @app.route('/addTags', methods=['POST'])
