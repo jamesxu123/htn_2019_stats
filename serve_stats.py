@@ -6,6 +6,7 @@ from scipy import stats
 import os
 from flask_cors import CORS
 from dotenv import load_dotenv
+from bson.json_util import dumps
 
 load_dotenv()
 app = Flask(__name__)
@@ -126,7 +127,7 @@ def get_receipt(transaction_id):
 @app.route('/getReceipt')
 def get_all_receipt():
     print([dict(i) for i in db.receipts.find()])
-    return jsonify([dict(i) for i in db.receipts.find()])
+    return dumps([dict(i) for i in db.receipts.find()])
 
 
 @app.route('/addTags', methods=['POST'])
