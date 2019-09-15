@@ -7,7 +7,7 @@ import os
 from flask_cors import CORS
 from dotenv import load_dotenv
 from bson.json_util import dumps
-import datetime
+import datetime, time
 
 load_dotenv()
 app = Flask(__name__)
@@ -150,13 +150,18 @@ def get_transactions(customer_id, per_page, page_num):
     data = requests.get('https://api.td-davinci.com/api/customers/%s/transactions' % customer_id, headers={
         'Authorization': os.getenv('TD_API_KEY')}).json()
     data = data['result']
+    final = []
     for trans in data:
         if len(trans["originationDateTime"]) == 20:
             trans["originationDateTime"] += ".000"
         trans["originationDateTime"] = trans["originationDateTime"][:-8] + ":00Z"
-    data = sorted(data, key=lambda obj: datetime.datetime.strptime(obj['originationDateTime'],
-                                                                   '%Y-%m-%dT%H:%M:%SZ').timestamp(), reverse=True)
-    paginated = data[int(per_page) * int(page_num): int(per_page) * (int(page_num) + 1)]
+        trans['originationDateTime'] = datetime.datetime.strptime(trans['originationDateTime'],
+                                                                   '%Y-%m-%dT%H:%M:%SZ')
+        if time.time() > trans["originationDateTime"].timestamp():
+            final.append(trans)
+
+    final = sorted(final, key=lambda obj: obj['originationDateTime'].timestamp(), reverse=True)
+    paginated = final[int(per_page) * int(page_num): int(per_page) * (int(page_num) + 1)]
     for pg in paginated:
         details = db.receipts.find_one({'transactionId': pg['id']})
         pg['details'] = dumps(details)
