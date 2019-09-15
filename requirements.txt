@@ -5,3 +5,4 @@ scipy
 requests
 flask-cors
 python-dotenv
+python-dateutil

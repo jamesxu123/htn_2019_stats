@@ -109,9 +109,9 @@ def add_receipt():
     details = data['details']
     customer_id = data['customerId']
     transaction_id = data['transactionId']
-    result = requests.get('https://api.td-davinci.com/api/transactions/' + escape(transaction_id),  headers={
+    result = requests.get('https://api.td-davinci.com/api/transactions/' + escape(transaction_id), headers={
         'Authorization': os.getenv('TD_API_KEY')}).json()['result']
-    #datetime.datetime.strptime(result['originationDateTime'], "%Y-%m-%dT%H:%M:%S:%fZ")
+    # datetime.datetime.strptime(result['originationDateTime'], "%Y-%m-%dT%H:%M:%S:%fZ")
     data['originationDateTime'] = result['originationDateTime']
     if details and customer_id and transaction_id:
         db.receipts.update_one({'transactionId': transaction_id}, {'$set': data}, upsert=True)
@@ -148,7 +148,14 @@ def add_tags():
 @app.route('/getTransactions/<customer_id>/<per_page>/<page_num>')
 def get_transactions(customer_id, per_page, page_num):
     data = requests.get('https://api.td-davinci.com/api/customers/%s/transactions' % customer_id, headers={
-        'Authorization': os.getenv('TD_API_KEY')}).json()['result']
+        'Authorization': os.getenv('TD_API_KEY')}).json()
+    data = data['result']
+    for trans in data:
+        if len(trans["originationDateTime"]) == 20:
+            trans["originationDateTime"] += ".000"
+        trans["originationDateTime"] = trans["originationDateTime"][:-8] + ":00Z"
+    data = sorted(data, key=lambda obj: datetime.datetime.strptime(obj['originationDateTime'],
+                                                                   '%Y-%m-%dT%H:%M:%SZ').timestamp(), reverse=True)
     paginated = data[int(per_page) * int(page_num): int(per_page) * (int(page_num) + 1)]
     for pg in paginated:
         details = db.receipts.find_one({'transactionId': pg['id']})
