@@ -167,5 +167,5 @@ def get_one_transaction(transaction_id):
     #     del receipt['_id']
     data = requests.get('https://api.td-davinci.com/api/transactions/' + escape(transaction_id), headers={
         'Authorization': os.getenv('TD_API_KEY')
-    }).json()['result']
+    }).json()
     return jsonify([data])
