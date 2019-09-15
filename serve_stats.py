@@ -111,7 +111,8 @@ def add_receipt():
     transaction_id = data['transactionId']
     result = requests.get('https://api.td-davinci.com/api/transactions/' + escape(transaction_id),  headers={
         'Authorization': os.getenv('TD_API_KEY')}).json()['result']
-    data['originationDateTime'] = datetime.datetime.strptime(result['originationDateTime'], "%Y-%m-%dT%H:%M:%S:%fZ")
+    #datetime.datetime.strptime(result['originationDateTime'], "%Y-%m-%dT%H:%M:%S:%fZ")
+    data['originationDateTime'] = result['originationDateTime']
     if details and customer_id and transaction_id:
         db.receipts.update_one({'transaction_id': transaction_id}, {'$set': data}, upsert=True)
     else:
