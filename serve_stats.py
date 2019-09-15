@@ -141,7 +141,7 @@ def add_tags():
     :return: status
     """
     data = request.json
-    r = requests.put('/api/transactions/' + escape(data['transactionId']) + '/transactions')
+    r = requests.put('/api/transactions/' + escape(data['transactionId']) + '/tags')
     return r.json()
 
 
@@ -154,3 +154,18 @@ def get_transactions(customer_id, per_page, page_num):
         details = db.receipts.find_one({'transactionId': pg['id']})
         pg['details'] = dumps(details)
     return jsonify(paginated)
+
+
+@app.route('/getTransaction/<transaction_id>')
+def get_one_transaction(transaction_id):
+    # receipt = dict(db.receipts.find_one({'transactionId': transaction_id}))
+    # remove = False
+    # for key in receipt.keys():
+    #     if key == '_id':
+    #         remove = True
+    # if remove:
+    #     del receipt['_id']
+    data = requests.get('/api/transactions/' + escape(transaction_id), headers={
+        'Authorization': os.getenv('TD_API_KEY')
+    }).json()['result']
+    return jsonify([data])
