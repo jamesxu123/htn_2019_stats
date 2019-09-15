@@ -152,5 +152,5 @@ def get_transactions(customer_id, per_page, page_num):
     paginated = data[int(per_page) * int(page_num): int(per_page) * (int(page_num) + 1)]
     for pg in paginated:
         details = db.receipts.find_one({'transactionId': pg['id']})
-        pg['details'] = details
+        pg['details'] = dumps(details)
     return jsonify(paginated)
