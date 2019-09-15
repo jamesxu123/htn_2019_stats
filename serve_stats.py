@@ -7,6 +7,7 @@ import os
 from flask_cors import CORS
 from dotenv import load_dotenv
 from bson.json_util import dumps
+import datetime
 
 load_dotenv()
 app = Flask(__name__)
@@ -108,6 +109,8 @@ def add_receipt():
     details = data['details']
     customer_id = data['customerId']
     transaction_id = data['transactionId']
+    result = requests.get('https://api.td-davinci.com/api/transactions' + escape(transaction_id)).json()['result']
+    data['originationDateTime'] = datetime.datetime(result['originationDateTime'])
     if details and customer_id and transaction_id:
         db.receipts.update_one({'transaction_id': transaction_id}, {'$set': data}, upsert=True)
     else:
@@ -126,7 +129,6 @@ def get_receipt(transaction_id):
 
 @app.route('/getReceipt')
 def get_all_receipt():
-    print([dict(i) for i in db.receipts.find()])
     return dumps([dict(i) for i in db.receipts.find()])
 
 
